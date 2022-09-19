@@ -1,5 +1,10 @@
 # app to create EQ2a logbook reports
 
+# TODO paediatric summary by supervision and age </> 5
+# TODO obstetrics summary by supervision and ASA
+# TODO TIVA summary by supervision and ASA
+# TODO procedures summary
+
 library(shiny)
 library(tidyverse)
 library(readxl)
