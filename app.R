@@ -1,7 +1,5 @@
 # app to create EQ2a logbook reports
 
-# FIXME obstetrics summary by supervision and ASA
-# TODO TIVA summary by supervision and ASA
 # TODO procedures summary
 
 library(shiny)
@@ -11,22 +9,33 @@ library(DT)
 
 # define report dropdown
 logs <- c(
-    "Anaesthetic Cases", 
-    "Paediatric Cases", 
-    "Regional Cases", 
-    "Obstetric Cases ASA 3+",
-    "General ASA 3+",
     "Paediatric Summary",
     "Regional Summary", 
-#        "Obstetric Summary",
+    "Obstetric Summary",
     "Sessions Summary",
+    "TIVA Summary",
+    "Sedation Summary",
+    "Obstetric Cases ASA 3+",
+    "General ASA 3+",
+    "All Cases", 
     "TIVA Cases",
-    "Sedation"
+    "Sedation Cases",
+    "Paediatric Cases", 
+    "Regional Cases"
     )
 
 ui <- fluidPage(
-    fileInput("upload", NULL, accept = ".xlsx"),
-    selectInput("report", "Choose a report", logs),
+    titlePanel("Lifelong Learning Platform ARCP Logbook Summaries"),
+
+    sidebarLayout(
+        sidebarPanel(
+            fileInput("upload", NULL, accept = ".xlsx"),
+            selectInput("report", "Choose a report", logs)
+        ),
+        mainPanel(
+            p("Download your logbook from ", a("https://lifelong.rcoa.ac.uk"), "and upload this to the webpage by clicking 'Browse'. Then select a report from the dropdown to view.")
+        )
+    ),
     DTOutput("table")
 )
 
@@ -49,6 +58,8 @@ server <- function(input, output, session) {
         data
     })
 
+
+    # Filter (needs function)
     # filter for paediatric cases and categorise under/over 5yrs
     paediatric_cases <- reactive({
         paeds_cases <- anaesthetic_cases() %>%
@@ -86,17 +97,18 @@ server <- function(input, output, session) {
     })
 
     # filter for TIVA cases
-    tiva <- reactive({
+    tiva_cases <- reactive({
         anaesthetic_cases() %>%
             filter(Procedure_Type %in% c("tci", "tiva"))
     })
 
     # filter for sedation cases
-    sedation <- reactive({
+    sedation_cases <- reactive({
         anaesthetic_cases() %>%
             filter(Mode_of_Anaesthesia == "sedation")
     })
     
+    # Summaries (needs function)
     # summarise regional cases
     regional_summary <- reactive({
         regional_cases() %>%
@@ -107,7 +119,7 @@ server <- function(input, output, session) {
                 values_from = Number,
                 values_fill = 0
                 ) %>%
-            mutate(total = distant + immediate + local + solo)
+            mutate(Total = rowSums(across(where(is.numeric))))
     })
 
     # summarise paeds cases
@@ -120,19 +132,46 @@ server <- function(input, output, session) {
                 values_from = Number,
                 values_fill = 0
                 ) %>% 
-            mutate(Total = Distant + Immediate + Local)
+            mutate(Total = rowSums(across(where(is.numeric))))
     })
 
-    # summarise obstetric cases # FIXME
+    # summarise obstetric cases
     obstetric_summary <- reactive({
         obstetric_cases() %>% 
             group_by(ASA, Supervision) %>% 
-            summarise(Number = n())
+            summarise(Number = n()) %>% 
             pivot_wider(
                 names_from = Supervision,
                 values_from = Number,
                 values_fill = 0
-                )
+                ) %>% 
+            mutate(Total = rowSums(across(where(is.numeric))))
+    })
+
+    # summarise tiva cases
+    tiva_summary <- reactive({
+        tiva_cases() %>% 
+            group_by(ASA, Supervision) %>% 
+            summarise(Number = n()) %>% 
+            pivot_wider(
+                names_from = Supervision,
+                values_from = Number,
+                values_fill = 0
+                ) %>% 
+            mutate(Total = rowSums(across(where(is.numeric))))
+    })
+
+    # summarise sedation cases
+    sedation_summary <- reactive({
+        sedation_cases() %>% 
+            group_by(ASA, Supervision) %>% 
+            summarise(Number = n()) %>% 
+            pivot_wider(
+                names_from = Supervision,
+                values_from = Number,
+                values_fill = 0
+                ) %>% 
+            mutate(Total = rowSums(across(where(is.numeric))))
     })
 
     # load and clean sessions sheet
@@ -172,17 +211,19 @@ server <- function(input, output, session) {
 
     output$table <- renderDT(
         switch(input$report,
-            "Anaesthetic Cases" = anaesthetic_cases(),
+            "All Cases" = anaesthetic_cases(),
             "Paediatric Cases" = paediatric_cases(),
             "Regional Cases" = regional_cases(),
             "Paediatric Summary" = paediatric_summary(),
             "Regional Summary" = regional_summary(),
-#                "Obstetric Summary" = obstetric_summary(),
+            "Obstetric Summary" = obstetric_summary(),
             "Sessions Summary" = sessions_summary(),
             "Obstetric Cases ASA 3+" = obstetric_complex(),
             "General ASA 3+" = general_complex(),
-            "TIVA Cases" = tiva(),
-            "Sedation" = sedation()
+            "TIVA Cases" = tiva_cases(),
+            "TIVA Summary" = tiva_summary(),
+            "Sedation Cases" = sedation_cases(),
+            "Sedation Summary" = sedation_summary()
         )
     )
 }
