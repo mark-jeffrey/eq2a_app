@@ -33,11 +33,14 @@ ui <- fluidPage(
             selectInput("report", "Choose a report", logs)
         ),
         mainPanel(
-            p("Download your logbook from ", a("https://lifelong.rcoa.ac.uk"), "and upload this to the webpage by clicking 'Browse'. Then select a report from the dropdown to view."),
-            p("Created by Mark Jeffrey, source code https://github.com/Hobnobs9444")
+            p("Download your logbook from ", 
+                a(href = "https://lifelong.rcoa.ac.uk", "lifelong.rcoa.ac.uk"), 
+                "and upload it by clicking 'Browse'."),
+            p("Select a report from the dropdown to view."),
+            p("Created by Mark Jeffrey. Source code on ", a(href = "https://github.com/Hobnobs9444/eq2a_app", "GitHub"))
         )
     ),
-    DTOutput("table"),
+    DTOutput("table")
 )
 
 server <- function(input, output, session) {
