@@ -33,10 +33,11 @@ ui <- fluidPage(
             selectInput("report", "Choose a report", logs)
         ),
         mainPanel(
-            p("Download your logbook from ", a("https://lifelong.rcoa.ac.uk"), "and upload this to the webpage by clicking 'Browse'. Then select a report from the dropdown to view.")
+            p("Download your logbook from ", a("https://lifelong.rcoa.ac.uk"), "and upload this to the webpage by clicking 'Browse'. Then select a report from the dropdown to view."),
+            p("Created by Mark Jeffrey, source code https://github.com/Hobnobs9444")
         )
     ),
-    DTOutput("table")
+    DTOutput("table"),
 )
 
 server <- function(input, output, session) {
@@ -46,7 +47,7 @@ server <- function(input, output, session) {
         req(input$upload)
 
         # read input file
-        data <- read_excel(input$upload$datapath, sheet = 1)
+        data <- read_excel(input$upload$datapath, sheet = "LOGBOOK_CASE_ANAESTHETIC")
         # correct colnmaes
         colnames(data) <- str_replace_all(colnames(data), " ", "_")
         # create age columns
@@ -178,7 +179,7 @@ server <- function(input, output, session) {
     sessions <- reactive({
         req(input$upload)
 
-        data <- read_excel(input$upload$datapath, sheet = 2)
+        data <- read_excel(input$upload$datapath, sheet = "LOGBOOK_SESSION")
         colnames(data) <- str_replace_all(colnames(data), " ", "_")
         data
     })
@@ -194,7 +195,7 @@ server <- function(input, output, session) {
     procedures <- reactive({
         req(input$upload)
 
-        data <- read_excel(input$upload$datapath, sheet = 3)
+        data <- read_excel(input$upload$datapath, sheet = "LOGBOOK_STAND_ALONE_PROCEDURE")
         colnames(data) <- str_replace_all(colnames(data), " ", "_")
         colnames(data) <- str_replace_all(colnames(data), "[()]", "")
         data
@@ -204,7 +205,7 @@ server <- function(input, output, session) {
     icm_cases <- reactive({
         req(input$upload)
 
-        data <- read_excel(input$upload$datapath, sheet = 4)
+        data <- read_excel(input$upload$datapath, sheet = "LOGBOOK_CASE_INTENSIVE")
         colnames(data) <- str_replace_all(colnames(data), " ", "_")
         data
     })
